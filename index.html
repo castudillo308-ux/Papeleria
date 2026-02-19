@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papelería Pro | SaaS Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <script>
+        (function () {
+            const theme = localStorage.getItem('papeleria_theme') || 'dark';
+            if (theme === 'dark') document.body.classList.add('dark-mode');
+            document.body.classList.add('preload');
+            window.addEventListener('load', () => {
+                setTimeout(() => document.body.classList.remove('preload'), 100);
+            });
+        })();
+    </script>
+    <div class="app-container">
+        <div id="toast-container"></div>
+
+        <aside class="sidebar">
+            <a href="#" class="logo">
+                <i data-lucide="sparkles"></i>
+                <span>Papelería Pro</span>
+            </a>
+            <nav class="nav-links">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i data-lucide="layout-grid"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#inventory" class="nav-item" data-section="inventory">
+                    <i data-lucide="package-search"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#sales" class="nav-item" data-section="sales">
+                    <i data-lucide="credit-card"></i>
+                    <span>Punto de Venta</span>
+                </a>
+
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <i data-lucide="settings-2"></i>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="page-title">
+                    <h1 id="current-section-title">Dashboard</h1>
+                    <p id="current-section-desc">Monitorea el rendimiento de tu negocio en tiempo real.</p>
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-primary" id="btn-quick-sale">
+                        <i data-lucide="shopping-cart" style="width: 18px; margin-right: 8px;"></i> Vender Ahora
+                    </button>
+                </div>
+            </header>
+
+            <div id="sections-container">
+
+                <section id="dashboard" class="section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--info-bg); color: var(--info);"><i
+                                    data-lucide="box"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Total Productos</span>
+                                <span class="stat-value" id="stats-total-products">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-bg); color: var(--success);"><i
+                                    data-lucide="trending-up"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Ventas Hoy</span>
+                                <span class="stat-value" id="stats-sales-today">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--danger-bg); color: var(--danger);"><i
+                                    data-lucide="alert-circle"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-label">Bajo Stock</span>
+                                <span class="stat-value" id="stats-low-stock">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insights-grid">
+                        <!-- Alertas de Reabastecimiento -->
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <i data-lucide="alert-octagon" style="color: var(--danger);"></i>
+                                <h3>Alertas de Reabastecimiento</h3>
+                            </div>
+                            <div id="restock-alerts" class="insight-content">
+                                <!-- Lista dinámica -->
+                            </div>
+                        </div>
+
+                        <!-- Top Ventas e Insights -->
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <i data-lucide="trophy" style="color: var(--warning);"></i>
+                                <h3>Insights de Ventas</h3>
+                            </div>
+                            <div id="sales-insights" class="insight-content">
+                                <!-- Contenido dinámico -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="inventory" class="section">
+                    <div class="actions-bar"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div class="search-box" style="position: relative; width: 350px;">
+                            <i data-lucide="search"
+                                style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px;"></i>
+                            <input type="text" id="inventory-search" class="form-control"
+                                placeholder="Buscar por nombre, código, marca..." style="padding-left: 42px;">
+                        </div>
+                        <button class="btn btn-primary" id="btn-add-product">
+                            <i data-lucide="plus" style="width: 18px;"></i> Nuevo Artículo
+                        </button>
+                    </div>
+
+                    <div class="filter-bar" id="material-filters">
+                        <button class="filter-pill active" data-material="all">Todos</button>
+                        <button class="filter-pill" data-material="Escolar">Escolar</button>
+                        <button class="filter-pill" data-material="Oficina">Oficina</button>
+                        <button class="filter-pill" data-material="Técnico">Técnico</button>
+                        <button class="filter-pill" data-material="Arte">Arte</button>
+                    </div>
+                    <div
+                        style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                        Regalos y Juguetes</div>
+                    <div class="filter-bar" id="extra-filters">
+                        <button class="filter-pill" data-material="Detalles">Detalles</button>
+                        <button class="filter-pill" data-material="Juguetería">Juguetería</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU / Cód</th>
+                                    <th>Descripción</th>
+                                    <th>P. Compra</th>
+                                    <th>P. Venta</th>
+
+                                    <th>Estatus</th>
+                                    <th>Mín.</th>
+                                    <th style="text-align: right;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sales" class="section">
+                    <div class="pos-layout">
+                        <div class="cart-card">
+                            <h3 style="margin-bottom: 1.5rem; font-weight: 700;">🛒 Carrito de Venta</h3>
+                            <div class="search-box" style="position: relative; margin-bottom: 2rem;">
+                                <i data-lucide="search"
+                                    style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px;"></i>
+                                <input type="text" id="sales-product-search" class="form-control"
+                                    placeholder="Escanear o buscar producto..." style="padding-left: 42px;"
+                                    autocomplete="off">
+                                <div id="sales-suggestions" class="suggestions-container"></div>
+                            </div>
+
+                            <div id="sales-qty-bar">
+                                <div class="qty-product-info">
+                                    <div id="qty-bar-name" class="qty-product-name">Producto</div>
+                                    <div id="qty-bar-meta" class="qty-product-meta">Marca | Stock: 0</div>
+                                </div>
+                                <div class="qty-input-group">
+                                    <button class="qty-btn" id="qty-minus">-</button>
+                                    <input type="number" id="qty-input" class="qty-input" value="1" min="1">
+                                    <button class="qty-btn" id="qty-plus">+</button>
+                                </div>
+                                <button class="btn btn-primary" id="btn-add-to-cart-confirm"
+                                    style="padding: 0.5rem 1rem;">
+                                    <i data-lucide="shopping-cart" style="width: 16px; margin-right: 5px;"></i> Añadir
+                                </button>
+                                <button class="btn-icon" id="btn-cancel-qty"
+                                    style="color: var(--text-muted)">&times;</button>
+                            </div>
+
+                            <div class="table-container" style="border: none; box-shadow: none;">
+                                <table id="cart-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Unit.</th>
+                                            <th>Cant.</th>
+                                            <th>Total</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cart-tbody"></tbody>
+                                </table>
+                            </div>
+
+                            <div id="sales-history-container"
+                                style="margin-top: 3rem; border-top: 1px dashed var(--border-color); padding-top: 2rem;">
+                                <h4 style="margin-bottom: 1.5rem; font-weight: 700;">Últimas Transacciones</h4>
+                                <div class="table-container" style="border: none; box-shadow: none;">
+                                    <table id="sales-history-table" style="font-size: 0.8125rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>Folio</th>
+                                                <th>Fecha</th>
+                                                <th>Monto</th>
+                                                <th style="text-align: right;">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sales-history-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="receipt-style">
+                            <h3
+                                style="font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                                Total de Cobro</h3>
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+                                    <span>Subtotal</span>
+                                    <span id="sale-subtotal" class="price-font">$0.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+                                    <span>Impuestos (0%)</span>
+                                    <span>$0.00</span>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 2px dashed var(--border-color);">
+                                    <span style="font-weight: 700;">TOTAL</span>
+                                    <span id="sale-total" class="price-font"
+                                        style="font-weight: 700; color: var(--primary); font-size: 1.5rem;">$0.00</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-complete" id="btn-complete-sale">
+                                <i data-lucide="check-circle" style="width: 20px;"></i> Procesar Pago
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+
+
+                <section id="settings" class="section">
+                    <div class="settings-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: start;">
+
+                        <!-- Tarjeta Datos de la Empresa -->
+                        <div class="card-large"
+                            style="background: var(--card-bg); padding: 2.5rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                                <div class="header-icon-small"
+                                    style="background: var(--primary-bg); color: var(--primary);">
+                                    <i data-lucide="building-2"></i>
+                                </div>
+                                <h3 style="font-weight: 700; margin: 0;">Datos de la Empresa</h3>
+                            </div>
+
+                            <form id="company-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                <div class="form-group">
+                                    <label>NOMBRE COMERCIAL</label>
+                                    <input type="text" id="cfg-company-name" class="form-control"
+                                        placeholder="Nombre del negocio">
+                                </div>
+                                <div class="form-group">
+                                    <label>NIT / RUT</label>
+                                    <input type="text" id="cfg-company-nit" class="form-control"
+                                        placeholder="900.000.000-0">
+                                </div>
+                                <div class="form-group">
+                                    <label>DIRECCIÓN</label>
+                                    <input type="text" id="cfg-company-address" class="form-control"
+                                        placeholder="Calle, Carrera, Av...">
+                                </div>
+                                <div class="form-group">
+                                    <label>TELÉFONO</label>
+                                    <input type="text" id="cfg-company-phone" class="form-control"
+                                        placeholder="555-0000">
+                                </div>
+                                <div class="form-group">
+                                    <label>MENSAJE DE RECIBO</label>
+                                    <textarea id="cfg-company-thanks" class="form-control" rows="2"
+                                        style="resize: none;" placeholder="Ej: ¡Gracias por su compra!"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary"
+                                    style="margin-top: 1rem; justify-content: center;">
+                                    <i data-lucide="save" style="width: 18px;"></i> Guardar Configuración
+                                </button>
+                            </form>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- Tarjeta Apariencia -->
+                            <div
+                                style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                                <h3 style="margin-bottom: 1.5rem; font-weight: 700;">Apariencia</h3>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <p style="font-weight: 600;">Modo Oscuro</p>
+                                        <p style="color: var(--text-muted); font-size: 0.8125rem;">Alternar entre temas
+                                            claro y oscuro.</p>
+                                    </div>
+                                    <button class="btn btn-secondary" id="btn-toggle-theme">
+                                        <i data-lucide="moon"></i> <span>Oscuro</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tarjeta Base de Datos -->
+                            <div
+                                style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                                <h3 style="margin-bottom: 1rem; font-weight: 700;">Copia de Seguridad (JSON)</h3>
+                                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                                    Bajar o subir registros del sistema.</p>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" id="json-upload" accept=".json" style="display: none;">
+                                    <label for="json-upload" class="file-upload-label">
+                                        <i data-lucide="upload"></i>
+                                        <span>Seleccionar Backup</span>
+                                    </label>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <button class="btn btn-primary" id="btn-export-json"
+                                        style="background: var(--success); border: none; width: 100%; justify-content: center;">
+                                        <i data-lucide="download"></i> Exportar JSON
+                                    </button>
+                                    <button class="btn" id="btn-reset-data"
+                                        style="color: var(--danger); background: var(--danger-bg); border: none; width: 100%; justify-content: center;">
+                                        <i data-lucide="refresh-cw"></i> Reset Sistema
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="header-icon-small">
+                    <i data-lucide="package"></i>
+                </div>
+                <h3 id="modal-title">Gestionar Producto</h3>
+            </div>
+
+            <form id="product-form" class="compact-grid">
+                <input type="hidden" id="product-id">
+
+                <div class="form-group span-1">
+                    <label>SKU / Código</label>
+                    <input type="text" id="product-code" class="form-control" placeholder="ABC-001" required>
+                </div>
+
+                <div class="form-group span-3">
+                    <label>Nombre del Producto</label>
+                    <input type="text" id="product-name" class="form-control" placeholder="Ej: Lápiz HB" required>
+                </div>
+
+                <div class="form-group span-2">
+                    <label>Marca</label>
+                    <input type="text" id="product-brand" class="form-control" placeholder="Ej: Norma">
+                </div>
+
+                <div class="form-group span-2">
+                    <label>Categoría</label>
+                    <select id="product-material" class="form-control">
+                        <option value="Escolar">Escolar</option>
+                        <option value="Oficina">Oficina</option>
+                        <option value="Técnico">Técnico</option>
+                        <option value="Arte">Arte</option>
+                        <option value="Detalles">Detalles</option>
+                        <option value="Juguetería">Juguetería</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>P. Compra</label>
+                    <input type="number" id="product-buy" class="form-control" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>P. Venta</label>
+                    <input type="number" id="product-sell" class="form-control" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" id="product-stock" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Mínimo</label>
+                    <input type="number" id="product-min" class="form-control" required>
+                </div>
+
+                <div class="modal-actions span-4">
+                    <button type="button" class="btn btn-secondary" id="btn-close-modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="color: var(--danger); margin-bottom: 1rem;"><i data-lucide="alert-triangle"
+                    style="width: 48px; height: 48px;"></i></div>
+            <h3 style="font-weight: 700; margin-bottom: 0.5rem;">¿Confirmar Eliminación?</h3>
+            <p id="confirm-modal-message" style="color: var(--text-muted); font-size: 0.9375rem; margin-bottom: 2rem;">
+                ¿Estás seguro de eliminar este elemento? Esta acción no se puede deshacer.</p>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="btn btn-secondary" id="btn-close-confirm-modal"
+                    style="flex: 1;">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete"
+                    style="flex: 1; background: var(--danger); color: white; display: flex; align-items: center; justify-content: center; border: none; font-weight: 600;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px; padding: 0; overflow: hidden; background: #fff;">
+            <div id="receipt-preview-container"
+                style="padding: 2rem; background: #fff; color: #000; font-family: 'Courier New', Courier, monospace;">
+            </div>
+            <div class="modal-actions"
+                style="padding: 1.5rem; background: var(--card-bg); border-top: 1px solid var(--border-color); margin-top: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; width: 100%;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="printReceipt()"><i
+                            data-lucide="printer"></i> Imprimir</button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="downloadReceiptImage()"><i
+                            data-lucide="download"></i> Imagen</button>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%; border: none; background: transparent;"
+                    onclick="closeReceiptModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reseteo del Sistema -->
+    <div id="reset-system-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center; padding: 2.5rem;">
+            <div style="color: #f59e0b; margin-bottom: 1.5rem; display: flex; justify-content: center;">
+                <i data-lucide="alert-triangle" style="width: 64px; height: 64px;"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">¿Estás completamente seguro?</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem;">
+                Esta acción es <strong>irreversible</strong>. Todos tus productos, ventas y configuraciones se borrarán
+                permanentemente. Te recomendamos realizar una copia de seguridad antes de continuar.
+            </p>
+            <div style="display: flex; gap: 1rem; width: 100%;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-reset"
+                    style="flex: 1; justify-content: center;">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-reset-all"
+                    style="flex: 1; justify-content: center; background: var(--danger); font-weight: 700;">
+                    SÍ, RESETEAR TODO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+        document.getElementById('btn-close-modal').onclick = () => document.getElementById('product-modal').classList.remove('active');
+
+        document.getElementById('btn-close-confirm-modal').onclick = () => document.getElementById('confirm-modal').classList.remove('active');
+    </script>
+</body>
+
+</html>
