@@ -1,17 +1,25 @@
 // --- UTILS ---
-const formatCOP = (val) => new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-}).format(val);
+const formatCOP = (val) => {
+    let num = Number(val);
+    if (isNaN(num)) num = 0; // Si no es un número, lo convierte a 0
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(num);
+};
 
-const formatCOPFull = (val) => new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-}).format(val);
+const formatCOPFull = (val) => {
+    let num = Number(val);
+    if (isNaN(num)) num = 0; // Si no es un número, lo convierte a 0
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(num);
+};
 
 let deleteCallback = null;
 function showConfirmModal(message, callback) {
@@ -828,14 +836,24 @@ function initSettings() {
     if (formCompany) {
         formCompany.onsubmit = (e) => {
             e.preventDefault();
-            companyData.name = document.getElementById('cfg-company-name')?.value || companyData.name;
-            companyData.nit = document.getElementById('cfg-company-nit')?.value || companyData.nit;
-            companyData.address = document.getElementById('cfg-company-address')?.value || companyData.address;
-            companyData.phone = document.getElementById('cfg-company-phone')?.value || companyData.phone;
-            companyData.thankYouMessage = document.getElementById('cfg-company-thanks')?.value || companyData.thankYouMessage;
 
-            saveCompanyData();
-            showToast('Configuración guardada correctamente', 'success');
+            const saveData = () => {
+                companyData.name = document.getElementById('cfg-company-name')?.value || companyData.name;
+                companyData.nit = document.getElementById('cfg-company-nit')?.value || companyData.nit;
+                companyData.address = document.getElementById('cfg-company-address')?.value || companyData.address;
+                companyData.phone = document.getElementById('cfg-company-phone')?.value || companyData.phone;
+                companyData.thankYouMessage = document.getElementById('cfg-company-thanks')?.value || companyData.thankYouMessage;
+
+                saveCompanyData();
+                showToast('Configuración guardada correctamente', 'success');
+            };
+
+            // Solicitar autenticación antes de guardar
+            if (typeof requestAdminAuth === 'function') {
+                requestAdminAuth(saveData);
+            } else {
+                saveData();
+            }
         };
     }
 
@@ -892,60 +910,134 @@ function initSettings() {
 
         if (btnConfirmReset) {
             btnConfirmReset.onclick = () => {
-                // 1. Limpieza Profunda de LocalStorage
-                localStorage.clear();
-
-                // 2. Reinicialización de Estado Interno (Valores por defecto)
-                state = {
-                    products: [],
-                    sales: [],
-                    cart: []
-                };
-
-                // 3. Configuración de Fábrica
-                companyData = {
-                    name: 'Mi Negocio',
-                    nit: '900.000.000-0',
-                    address: 'Calle Falsa 123',
-                    phone: '555-5555',
-                    thankYouMessage: '¡Gracias por su compra!'
-                };
-
-                // 4. Recarga de Interfaz
-                location.reload();
+                resetModal.classList.remove('active');
+                requestAdminAuth(executeReset);
             };
         }
     }
 
-    const jsonUpload = document.getElementById('json-upload');
-    if (jsonUpload) {
-        jsonUpload.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    // --- GLOBAL AUTH SYSTEM ---
+    let authSuccessCallback = null;
+    function requestAdminAuth(callback) {
+        const authModal = document.getElementById('admin-auth-modal');
+        const passwordInput = document.getElementById('admin-password-input');
+        const errorTip = document.getElementById('admin-password-error');
+        const btnTogglePass = document.getElementById('btn-toggle-admin-password');
+        const btnCancelAuth = document.getElementById('btn-cancel-auth');
+        const btnConfirmAuth = document.getElementById('btn-confirm-auth');
+        const ADMIN_PASS = '1081403989';
 
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const importedState = JSON.parse(ev.target.result);
+        if (!authModal || !passwordInput) return;
 
-                    // Validación Crítica de Estructura
-                    if (!importedState.products || !importedState.sales) {
-                        throw new Error('Estructura de archivo inválida: Faltan productos o ventas.');
-                    }
+        authSuccessCallback = callback;
+        authModal.classList.add('active');
 
-                    if (confirm(`¿Importar copia de seguridad? Esto sobrescribirá los datos actuales.`)) {
-                        state = importedState;
-                        saveState();
-                        showToast('Datos importados correctamente', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    }
-                } catch (err) {
-                    showToast(err.message || 'Error al leer el archivo JSON', 'error');
+        // Reset state
+        passwordInput.value = '';
+        passwordInput.type = 'password';
+        passwordInput.classList.remove('is-invalid');
+        if (errorTip) errorTip.style.display = 'none';
+        if (btnTogglePass) btnTogglePass.innerHTML = '<i data-lucide="eye"></i>';
+        if (window.lucide) window.lucide.createIcons();
+
+        setTimeout(() => passwordInput.focus(), 100);
+
+        const validate = () => {
+            if (passwordInput.value === ADMIN_PASS) {
+                authModal.classList.remove('active');
+                if (authSuccessCallback) {
+                    authSuccessCallback();
+                    authSuccessCallback = null;
                 }
-            };
-            reader.readAsText(file);
+            } else {
+                passwordInput.classList.add('is-invalid');
+                if (errorTip) errorTip.style.display = 'block';
+                showToast('Contraseña de administrador incorrecta', 'error');
+                passwordInput.style.animation = 'none';
+                passwordInput.offsetHeight; /* trigger reflow */
+                passwordInput.style.animation = null;
+            }
         };
+
+        if (btnConfirmAuth) btnConfirmAuth.onclick = validate;
+        passwordInput.onkeypress = (e) => { if (e.key === 'Enter') validate(); };
+        passwordInput.oninput = () => {
+            passwordInput.classList.remove('is-invalid');
+            if (errorTip) errorTip.style.display = 'none';
+            if (passwordInput.value === ADMIN_PASS) validate();
+        };
+
+        if (btnCancelAuth) {
+            btnCancelAuth.onclick = () => {
+                authModal.classList.remove('active');
+                authSuccessCallback = null;
+            };
+        }
+
+        if (btnTogglePass) {
+            btnTogglePass.onclick = () => {
+                const isPass = passwordInput.type === 'password';
+                passwordInput.type = isPass ? 'text' : 'password';
+                btnTogglePass.innerHTML = `<i data-lucide="${isPass ? 'eye-off' : 'eye'}"></i>`;
+                if (window.lucide) window.lucide.createIcons();
+            };
+        }
     }
+
+    function executeReset() {
+        // 1. Limpieza Profunda de LocalStorage
+        localStorage.clear();
+
+        // 2. Reinicialización de Estado Interno (Valores por defecto)
+        state = {
+            products: [],
+            sales: [],
+            cart: []
+        };
+
+        // 3. Configuración de Fábrica
+        companyData = {
+            name: 'Mi Negocio',
+            nit: '900.000.000-0',
+            address: 'Calle Falsa 123',
+            phone: '555-5555',
+            thankYouMessage: '¡Gracias por su compra!'
+        };
+
+        // 4. Mostrar éxito y Recarga de Interfaz
+        showToast('Sistema reseteado correctamente', 'success');
+        setTimeout(() => location.reload(), 1500);
+    }
+}
+
+const jsonUpload = document.getElementById('json-upload');
+if (jsonUpload) {
+    jsonUpload.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const importedState = JSON.parse(ev.target.result);
+
+                // Validación Crítica de Estructura
+                if (!importedState.products || !importedState.sales) {
+                    throw new Error('Estructura de archivo inválida: Faltan productos o ventas.');
+                }
+
+                if (confirm(`¿Importar copia de seguridad? Esto sobrescribirá los datos actuales.`)) {
+                    state = importedState;
+                    saveState();
+                    showToast('Datos importados correctamente', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (err) {
+                showToast(err.message || 'Error al leer el archivo JSON', 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
 }
 
 // --- RECEIPT & PRINT LOGIC ---
@@ -1015,3 +1107,4 @@ window.downloadReceiptImage = () => {
 };
 
 window.closeReceiptModal = closeReceiptModal;
+
