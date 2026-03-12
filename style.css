@@ -1246,3 +1246,48 @@ body.dark-mode .settings-grid .card-large {
         color: black;
     }
 }
+
+/* --- Security & Auth Modal --- */
+#admin-auth-modal .form-control {
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+#admin-auth-modal .form-control::placeholder {
+    letter-spacing: normal;
+    font-size: 0.875rem;
+}
+
+#admin-password-input.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-bg);
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    50% {
+        transform: translateX(5px);
+    }
+
+    75% {
+        transform: translateX(-5px);
+    }
+}
+
+#btn-toggle-admin-password:hover {
+    color: var(--primary) !important;
+}
+
+body.dark-mode #admin-auth-modal .form-control {
+    background: #0f172a;
+}
