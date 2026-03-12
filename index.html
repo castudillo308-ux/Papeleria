@@ -489,6 +489,41 @@
         </div>
     </div>
 
+    <!-- Modal Autenticación Administrador -->
+    <div id="admin-auth-modal" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2.5rem;">
+            <div style="color: var(--primary); margin-bottom: 1.5rem; display: flex; justify-content: center;">
+                <i data-lucide="shield-check" style="width: 64px; height: 64px;"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;">Validación de Seguridad</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">
+                Ingresa la contraseña de administrador para confirmar el reseteo total del sistema.
+            </p>
+
+            <div class="form-group" style="position: relative; margin-bottom: 2rem; text-align: left;">
+                <label>CONTRASEÑA</label>
+                <div style="position: relative;">
+                    <input type="password" id="admin-password-input" class="form-control" placeholder="••••••••"
+                        style="padding-right: 45px;">
+                    <button type="button" id="btn-toggle-admin-password"
+                        style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+                <div id="admin-password-error"
+                    style="color: var(--danger); font-size: 0.75rem; margin-top: 5px; display: none;">Contraseña
+                    incorrecta</div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; width: 100%;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-auth"
+                    style="flex: 1; justify-content: center;">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-auth"
+                    style="flex: 1; justify-content: center; font-weight: 700;">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script>
         lucide.createIcons();
@@ -499,3 +534,4 @@
 </body>
 
 </html>
+
